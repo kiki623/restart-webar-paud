@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RE-START | Rumah Gadang AR #1</title>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    html,body {margin:0;height:100%;font-family:system-ui,-apple-system,sans-serif;background:#172519;color:white;overflow:hidden}
+    #intro {position:fixed;inset:0;background:linear-gradient(145deg,#173d32,#10251c);z-index:20;display:flex;align-items:center;justify-content:center;padding:22px;box-sizing:border-box}
+    .panel {max-width:430px;text-align:center;background:#ffffff12;border:1px solid #ffffff30;border-radius:20px;padding:24px 22px;box-shadow:0 15px 50px #0005}
+    .panel img {width:160px;max-width:65%;background:white;border-radius:8px;margin-bottom:12px}
+    h1 {font-size:24px;margin:4px 0 6px} p {line-height:1.5;font-size:15px;color:#e8f5eb}
+    button {border:0;background:#f5c568;color:#193221;padding:13px 18px;border-radius:12px;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
+    button:disabled{opacity:.55}
+    #ui{position:fixed;z-index:9;left:12px;right:12px;top:12px;display:none;pointer-events:none;text-align:center}
+    #status{display:inline-block;border-radius:12px;padding:11px 15px;background:#153829df;color:#fff;font-size:14px;max-width:90%}
+    #actions{position:fixed;bottom:20px;left:0;right:0;display:none;z-index:9;justify-content:center;gap:10px;pointer-events:none}
+    #actions button{pointer-events:auto;font-size:13px;padding:9px 13px;background:#f5d08a}
+    #notice {font-size:12px;opacity:.88}
+    a-scene{position:absolute;inset:0}
+  </style>
+  <script>
+    AFRAME.registerComponent('rumah-video-control', {
+      init: function () {
+        const entity=this.el;
+        const video=document.getElementById('arVideo');
+        const status=document.getElementById('status');
+        const replay=document.getElementById('replay');
+        const audio=document.getElementById('audio');
+        let found=false;
+        const setStatus=t=>{status.textContent=t};
+        entity.addEventListener('targetFound',async()=>{
+          found=true;
+          setStatus('Rumah Gadang terdeteksi — video berjalan');
+          if(video.ended || video.currentTime >= video.duration - .15) video.currentTime=0;
+          try {await video.play()} catch(e) {setStatus('Target terdeteksi. Ketuk Putar Ulang untuk menjalankan video.');}
+        });
+        entity.addEventListener('targetLost',()=>{
+          found=false;
+          video.pause();
+          setStatus('Arahkan kamera kembali ke gambar Rumah Gadang');
+        });
+        replay.addEventListener('click',async()=>{video.currentTime=0;if(found)try{await video.play()}catch(e){} });
+        audio.addEventListener('click',async()=>{
+          video.muted=!video.muted;
+          audio.textContent=video.muted?'Aktifkan Suara':'Matikan Suara';
+          if(found)try{await video.play()}catch(e){}
+        });
+        video.addEventListener('ended',()=>setStatus('Video selesai. Ketuk Putar Ulang untuk mengulang.'));
+      }
+    });
+    document.addEventListener('DOMContentLoaded',()=>{
+      const btn=document.getElementById('start');
+      const scene=document.getElementById('arScene');
+      const video=document.getElementById('arVideo');
+      const intro=document.getElementById('intro');
+      const status=document.getElementById('status');
+      const showStatus=(t)=>{status.textContent=t};
+      btn.addEventListener('click',async()=>{
+        btn.disabled=true;btn.textContent='Mengaktifkan kamera…';
+        // Prime media playback under a user gesture, muted by default for mobile browser policies.
+        video.muted=true;
+        try {await video.play();video.pause();video.currentTime=0;} catch(e){}
+        try {
+          if(!scene.hasLoaded) await new Promise(resolve=>scene.addEventListener('loaded',resolve,{once:true}));
+          await scene.systems['mindar-image-system'].start();
+          intro.style.display='none';
+          document.getElementById('ui').style.display='block';
+          document.getElementById('actions').style.display='flex';
+          showStatus('Arahkan kamera ke gambar Rumah Gadang tercetak');
+        } catch(e){
+          btn.disabled=false;btn.textContent='Coba Lagi';
+          const msg=document.getElementById('error');
+          msg.textContent='Gagal membuka kamera / file target. Pastikan HTTPS, izin kamera, dan targets.mind sudah diunggah. Detail: '+(e?.message||e);
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <div id="intro"><div class="panel">
+    <img src="rumah-gadang-target.jpg" alt="Target Rumah Gadang">
+    <h1>Rumah Gadang — AR #1</h1>
+    <p>Media cerita <strong>Puti dan Rimbo Kaki Bukik</strong>. Ketuk mulai, izinkan kamera, kemudian arahkan HP ke gambar Rumah Gadang yang dicetak datar.</p>
+    <button id="start">Mulai Scan AR</button>
+    <p id="notice">Video demo tanpa narasi. Guru tetap membacakan cerita.</p>
+    <p id="error" style="color:#ffdfb3" aria-live="polite"></p>
+  </div></div>
+  <div id="ui"><span id="status" aria-live="polite">Menyiapkan AR…</span></div>
+  <div id="actions"><button id="replay">Putar Ulang</button><button id="audio">Aktifkan Suara</button></div>
+  <a-scene id="arScene"
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; maxTrack: 1; uiScanning: yes; uiLoading: yes;"
+    color-space="sRGB" renderer="colorManagement: true; antialias: true"
+    vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
+    embedded>
+    <a-assets timeout="15000">
+      <video id="arVideo" src="./rumah-gadang-demo.mp4" preload="auto" muted playsinline webkit-playsinline crossorigin="anonymous"></video>
+    </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity id="rumahTarget" mindar-image-target="targetIndex: 0" rumah-video-control>
+      <a-plane width="1" height="0.75" position="0 0 0.01" material="shader: flat; src: #arVideo; side: double"></a-plane>
+    </a-entity>
+  </a-scene>
+</body>
+</html>

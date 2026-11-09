@@ -1,0 +1,65 @@
+RE-START — PROTOTIPE WEBAR #1 RUMAH GADANG
+==========================================
+
+ISI PAKET
+- index.html                : halaman kamera dan tampilan video AR
+- rumah-gadang-target.jpg   : gambar Rumah Gadang untuk dicetak dan dijadikan target
+- rumah-gadang-demo.mp4     : VIDEO UJI 22 detik, gerakan kamera ringan pada gambar 2D.
+                              BUKAN animasi 3D final; belum ada gerakan atap, asap, atau serunai.
+- PANDUAN_MULAI.txt         : panduan ini
+
+PENTING: targets.mind BELUM ADA. File ini harus dibuat dari gambar target.
+
+LANGKAH 1 — BUAT FILE TARGET MINDAR
+1. Buka https://hiukim.github.io/mind-ar-js-doc/tools/compile/
+2. Unggah rumah-gadang-target.jpg (jangan gunakan gambar versi potong/lipat).
+3. Klik START dan tunggu proses kompilasi.
+4. Klik DOWNLOAD. File yang diunduh biasanya bernama targets.mind.
+5. Simpan targets.mind ke folder yang SAMA dengan index.html.
+   (Jika nama berbeda, ubah namanya menjadi targets.mind.)
+
+LANGKAH 2 — TERBITKAN SECARA GRATIS DENGAN GITHUB PAGES
+1. Buat akun atau login di https://github.com/
+2. Pilih New repository. Nama contoh: restart-ar-rumahgadang.
+3. Pilih Public -> Create repository.
+4. Klik Add file -> Upload files. Unggah kelima file dari folder ini, TERMASUK targets.mind.
+   File harus berada di root repository, tidak dalam folder bertingkat.
+5. Commit changes.
+6. Masuk Settings -> Pages -> Build and deployment -> Deploy from a branch.
+7. Pilih branch main, folder /(root), lalu Save.
+8. Setelah deployment selesai, URL berbentuk:
+   https://NAMA-AKUN.github.io/restart-ar-rumahgadang/
+   (Jangan gunakan URL ini tanpa mengganti NAMA-AKUN sesuai akun Anda.)
+
+LANGKAH 3 — UJI PADA HP
+1. Buka URL Github Pages di Chrome Android atau Safari iPhone (perlu HTTPS).
+2. Ketuk Mulai Scan AR dan IZINKAN KAMERA.
+3. Cetak rumah-gadang-target.jpg secara DATAR di kertas tidak mengilap.
+4. Arahkan kamera HP ke gambar cetak tersebut; video uji akan tampil di bidang gambar.
+5. Ketuk Aktifkan Suara jika video final sudah berisi audio. Video demo tanpa suara.
+6. Untuk membuat QR Code: masukkan URL GitHub Pages ke generator QR Code.
+   QR membuka situs AR; sesudah itu pengguna masih perlu mengarahkan kamera ke gambar target.
+
+LANGKAH 4 — GANTI VIDEO UJI DENGAN ANIMASI 3D FINAL
+1. Buat file video animasi Rumah Gadang 22 detik sesuai naskah.
+2. Format disarankan MP4 H.264, 640x480 atau 960x720, 4:3, audio AAC.
+3. Ganti berkas rumah-gadang-demo.mp4 dengan file video final yang namanya sama.
+4. Unggah ulang file video yang diganti melalui GitHub.
+5. Uji perilaku pemutaran audio HP; browser mungkin meminta ketukan awal.
+
+NASKAH VIDEO FINAL (sesuai dokumen penelitian)
+00–03 s: Rumah Gadang muncul perlahan.
+03–10 s: Atap gonjong bergerak sangat lembut; jendela bercahaya.
+08–20 s: Asap dapur naik perlahan.
+10–20 s: Serunai lembut.
+20–22 s: Pose akhir.
+Tanpa narasi dalam video; guru/pendongeng membacakan cerita.
+
+CATATAN PENELITIAN
+- Ini image-tracked video AR, bukan QR Code yang hanya membuka video biasa.
+- Saat target hilang dari kamera, video dijeda; saat target kembali, pemutaran dilanjutkan.
+- Uji apakah media cetak yang sebenarnya DATAR dan identik dengan target terdaftar.
+  Jika rumah pop-up dilipat, gunakan cetakan target datar yang terpisah.
+- MindAR open source. Hosting Github Pages gratis untuk repo publik sesuai syarat layanan.
+- Situs memerlukan akses internet untuk mengunduh pustaka AR dan video.
+- Video uji bukan animasi 3D final. Jangan klaim fitur atap/asap sudah terimplementasi.
