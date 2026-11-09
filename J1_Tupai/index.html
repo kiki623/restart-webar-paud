@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RE-START | WebAR J1 Tupai</title>
+<script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+html,body{margin:0;height:100%;font-family:system-ui,-apple-system,sans-serif;background:#15291b;color:#fff;overflow:hidden}
+a-scene{position:absolute;inset:0}
+#intro{position:fixed;inset:0;background:linear-gradient(145deg,#245a3b,#10251c);z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.panel{max-width:440px;text-align:center;background:#ffffff12;border:1px solid #ffffff30;border-radius:18px;padding:22px;box-sizing:border-box}
+h1{font-size:23px;margin:4px 0 10px}p{font-size:14px;line-height:1.55}
+button{border:0;background:#f5cd7b;color:#1a301f;padding:11px 15px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
+button:disabled{opacity:.65}
+#ui{position:fixed;z-index:10;top:13px;left:12px;right:12px;display:none;text-align:center;pointer-events:none}
+#status{display:inline-block;background:#143626ee;border-radius:10px;padding:10px 13px;font-size:13px;max-width:93%;line-height:1.4}
+#actions{position:fixed;z-index:11;bottom:max(18px,env(safe-area-inset-bottom));left:8px;right:8px;display:none;justify-content:center;gap:8px;flex-wrap:wrap}
+#actions button{font-size:12px;min-height:42px;padding:8px 12px}
+</style>
+</head>
+<body>
+<div id="intro"><div class="panel">
+<h1>Puti dan Rimbo Kaki Bukik</h1>
+<p><b>J1 — Tupai Berkejaran di Pagi Berembun</b></p>
+<p>Ketuk mulai, izinkan kamera, lalu arahkan ke gambar tupai. Tekan <b>Putar Video</b> bila video belum terlihat.</p>
+<button id="start">Mulai Scan AR</button>
+<p id="error" style="color:#ffe1ae" aria-live="polite"></p>
+</div></div>
+<div id="ui"><span id="status" aria-live="polite">Menyiapkan AR…</span></div>
+<div id="actions">
+<button id="play">▶ Putar Video</button>
+<button id="audio">🔊 Aktifkan Suara</button>
+<button id="replay">↺ Putar Ulang</button>
+</div>
+<a-scene id="arScene" mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; maxTrack: 1; uiScanning: yes; uiLoading: yes;" color-space="sRGB" renderer="colorManagement: true; antialias: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" embedded>
+<a-assets timeout="60000"><video id="videoJ1" src="./J1_tupai.mp4" preload="auto" muted loop playsinline webkit-playsinline crossorigin="anonymous"></video></a-assets>
+<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<a-entity id="tupaiTarget" mindar-image-target="targetIndex: 0">
+<a-plane id="screen" width="1" height="1" position="0 0 0.01" material="shader: flat; src: #videoJ1; side: double; transparent: false;"></a-plane>
+</a-entity>
+</a-scene>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const scene=document.querySelector('#arScene');
+ const video=document.querySelector('#videoJ1');
+ const target=document.querySelector('#tupaiTarget');
+ const screen=document.querySelector('#screen');
+ const intro=document.querySelector('#intro');
+ const start=document.querySelector('#start');
+ const status=document.querySelector('#status');
+ const ui=document.querySelector('#ui');
+ const actions=document.querySelector('#actions');
+ const audio=document.querySelector('#audio');
+ const play=document.querySelector('#play');
+ const replay=document.querySelector('#replay');
+ let tracking=false,sound=false;
+ function msg(s){status.textContent=s}
+ function refreshTexture(){
+   const mat=screen.getObject3D('mesh')?.material;
+   if(mat&&mat.map){mat.map.needsUpdate=true;mat.needsUpdate=true;}
+ }
+ async function playVideo(userGesture=false){
+   if(!tracking){msg('Arahkan kamera ke gambar Tupai J1 terlebih dahulu.');return}
+   video.muted=!sound;video.playsInline=true;
+   if(video.readyState<2){msg('Menyiapkan video…');video.load();}
+   try{
+     await video.play();
+     refreshTexture();
+     msg('Tupai J1 terdeteksi — video diputar'+(sound?' dengan suara':''));
+   }catch(e){
+     msg('Video belum dapat diputar otomatis. Ketuk tombol ▶ Putar Video.');
+   }
+ }
+ video.addEventListener('loadeddata',refreshTexture);
+ video.addEventListener('playing',()=>{refreshTexture();if(tracking)msg('Animasi J1 sedang diputar'+(sound?' dengan suara':' (tanpa suara)'))});
+ video.addEventListener('timeupdate',refreshTexture);
+ video.addEventListener('error',()=>msg('Video gagal dimuat. Periksa file J1_tupai.mp4 di GitHub.'));
+ target.addEventListener('targetFound',()=>{tracking=true;playVideo(false)});
+ target.addEventListener('targetLost',()=>{tracking=false;video.pause();msg('Arahkan kamera ke gambar Tupai J1')});
+ play.addEventListener('click',()=>playVideo(true));
+ replay.addEventListener('click',()=>{if(!tracking){msg('Arahkan kamera ke gambar Tupai J1');return};video.currentTime=0;playVideo(true)});
+ audio.addEventListener('click',()=>{
+   sound=!sound;video.muted=!sound;
+   audio.textContent=sound?'🔇 Matikan Suara':'🔊 Aktifkan Suara';
+   if(tracking)playVideo(true);
+ });
+ start.addEventListener('click',async()=>{
+   start.disabled=true;start.textContent='Mengaktifkan kamera…';
+   // User-gesture unlock: try to prime video playback before camera startup.
+   try{video.muted=true;video.playsInline=true;await video.play();video.pause();video.currentTime=0;refreshTexture()}catch(e){}
+   try{
+     if(!scene.hasLoaded)await new Promise(resolve=>scene.addEventListener('loaded',resolve,{once:true}));
+     await scene.systems['mindar-image-system'].start();
+     intro.style.display='none';ui.style.display='block';actions.style.display='flex';
+     msg('Arahkan kamera ke gambar Tupai J1');
+   }catch(e){
+     start.disabled=false;start.textContent='Coba Lagi';
+     document.querySelector('#error').textContent='Kamera gagal dibuka. Gunakan Safari/Chrome, izinkan kamera, dan periksa targets.mind. '+(e?.message||'');
+   }
+ });
+});
+</script>
+</body>
+</html>
