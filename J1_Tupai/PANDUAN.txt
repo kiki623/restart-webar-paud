@@ -1,0 +1,14 @@
+RE-START WebAR — Titik J1 Tupai saja
+
+1. Buka https://hiukim.github.io/mind-ar-js-doc/tools/compile/
+2. Upload HANYA gambar Tupai J1 bersih yang akan dipindai (tidak sertakan Rumah Gadang).
+3. Start/Compile dan unduh targets.mind.
+4. Pastikan dalam folder ini ada: index.html, targets.mind, J1_tupai.mp4.
+5. Ubah nama video J1 final Anda menjadi J1_tupai.mp4.
+6. Untuk menjaga prototipe Rumah Gadang, buat repository GitHub baru bernama restart-webar-j1-tupai; upload ketiga file di root repository.
+7. Settings > Pages > Deploy from a branch > main / (root) > Save.
+8. Akses HTTPS GitHub Pages di HP, pilih Mulai Scan AR, izinkan kamera, kemudian arahkan ke gambar J1.
+9. Pilih Aktifkan Suara jika audio belum terdengar.
+
+Catatan: HTML ini belum berisi file targets.mind atau video J1 yang Anda selesaikan sendiri. Keduanya harus disalin ke folder ini.
+Koneksi internet diperlukan untuk memuat pustaka JS dari CDN.
