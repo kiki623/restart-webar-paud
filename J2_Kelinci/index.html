@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>RE-START | J2 Kelinci - AR</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#08271c;color:#fff;font-family:system-ui,-apple-system,sans-serif}
+#hud{position:fixed;top:calc(6px + env(safe-area-inset-top));left:8px;right:8px;z-index:50;text-align:center;pointer-events:none}
+#status{display:inline-block;background:rgba(0,32,23,.9);padding:9px 12px;border-radius:9px;font-size:13px}
+#controls{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));left:8px;right:8px;z-index:60;display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+button{border:0;border-radius:8px;background:#f9da96;color:#222;font-weight:700;padding:10px 12px;font-size:13px}
+#cover{position:fixed;inset:0;z-index:100;background:#113827;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
+#cover article{max-width:390px;line-height:1.6}
+#fallback{display:none;position:fixed;inset:0;z-index:90;background:#000;align-items:center;justify-content:center;flex-direction:column;gap:15px;padding:15px}
+#fallback video{width:100%;max-height:75vh;object-fit:contain}
+/* On iOS the source video should have an actual, albeit tiny, layout box. */
+#sourceVideo{position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:1}
+</style></head><body>
+<div id="cover"><article><h2>J2 — Kelinci Keluar dari Liang</h2><p>Tekan Mulai, izinkan kamera, dan arahkan ke gambar kelinci. Video akan muncul tepat di atas target. Gunakan tombol Suara untuk mendengarkan efek alam.</p><button id="start">Mulai Scan AR</button></article></div>
+<div id="hud"><span id="status">Siap memindai gambar J2.</span></div>
+<div id="controls"><button id="play">▶ Putar Video</button><button id="sound">🔊 Aktifkan Suara</button><button id="replay">↻ Putar Ulang</button><button id="watch">▣ Lihat Video</button></div>
+<div id="fallback"><video id="fallbackVideo" src="./J2_kelinci.mp4" controls playsinline webkit-playsinline preload="metadata"></video><button id="back">Kembali ke AR</button></div>
+<video id="sourceVideo" src="./J2_kelinci.mp4" playsinline webkit-playsinline preload="auto" muted loop crossorigin="anonymous"></video>
+<a-scene id="scene" mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; maxTrack: 1; uiLoading: yes; uiScanning: yes; uiError: yes" embedded renderer="colorManagement: true; antialias: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<a-entity id="target" mindar-image-target="targetIndex: 0"><a-plane id="videoPlane" width="1" height="0.5625" position="0 0 0.02" visible="false" rabbit-canvas></a-plane></a-entity>
+</a-scene>
+<script>
+// Canvas texture is used rather than a direct VideoTexture for more dependable iOS Safari playback.
+AFRAME.registerComponent('rabbit-canvas',{
+ init:function(){
+   this.video=document.getElementById('sourceVideo');
+   this.canvas=document.createElement('canvas');this.canvas.width=960;this.canvas.height=540;
+   this.ctx=this.canvas.getContext('2d',{alpha:false});
+   this.texture=new AFRAME.THREE.CanvasTexture(this.canvas);
+   this.texture.minFilter=AFRAME.THREE.LinearFilter;
+   this.texture.magFilter=AFRAME.THREE.LinearFilter;
+   this.texture.generateMipmaps=false;
+   this.texture.colorSpace=AFRAME.THREE.SRGBColorSpace;
+   this.material=new AFRAME.THREE.MeshBasicMaterial({map:this.texture,side:AFRAME.THREE.DoubleSide,toneMapped:false});
+   this.lastFrame=-100;
+   this.applyMaterial=()=>{const mesh=this.el.getObject3D('mesh');if(mesh){mesh.material=this.material;mesh.material.needsUpdate=true;}};
+   this.el.addEventListener('object3dset',this.applyMaterial);this.applyMaterial();
+   // Provide a visible non-black placeholder while loading video.
+   this.ctx.fillStyle='#477a56';this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);this.texture.needsUpdate=true;
+ },
+ tick:function(t){
+   const v=this.video;
+   if(t-this.lastFrame<40 || v.readyState<2 || v.videoWidth===0 || v.paused)return;
+   this.lastFrame=t;
+   try{
+     this.ctx.drawImage(v,0,0,this.canvas.width,this.canvas.height);
+     this.texture.needsUpdate=true;
+   }catch(e){if(!this.drawError){this.drawError=true;document.getElementById('status').textContent='Video belum dapat ditampilkan pada AR: '+e.message;}}
+ },
+ remove:function(){this.el.removeEventListener('object3dset',this.applyMaterial);this.texture.dispose();this.material.dispose();}
+});
+(()=>{
+ const video=document.getElementById('sourceVideo'),scene=document.getElementById('scene'),target=document.getElementById('target'),plane=document.getElementById('videoPlane'),cover=document.getElementById('cover'),status=document.getElementById('status'),fb=document.getElementById('fallback'),fbv=document.getElementById('fallbackVideo');
+ let started=false,found=false;
+ const say=x=>status.textContent=x;
+ async function playVideo(){
+  if(!started){say('Tekan Mulai Scan AR terlebih dahulu.');return;}
+  try{await video.play();plane.setAttribute('visible',found);say(found?'Kelinci dikenali — video AR diputar.':'Video siap. Arahkan kamera ke kelinci.');}
+  catch(e){say('Pemutaran dibatasi browser. Tekan Putar Video.');console.warn(e);}
+ }
+ document.getElementById('start').onclick=async()=>{
+  if(started)return;
+  started=true;cover.style.display='none';video.muted=true;
+  try{await video.play();video.pause();video.currentTime=0;}catch(e){console.warn('Unlock:',e);}
+  try{await scene.systems['mindar-image-system'].start();say('Arahkan kamera ke gambar kelinci J2.');}
+  catch(e){say('Kamera gagal dimulai. Gunakan Safari/Chrome dan izinkan kamera.');console.error(e);}
+ };
+ target.addEventListener('targetFound',()=>{found=true;plane.setAttribute('visible',true);playVideo();});
+ target.addEventListener('targetLost',()=>{found=false;plane.setAttribute('visible',false);video.pause();say('Target tidak terlihat. Arahkan kembali ke gambar kelinci.');});
+ video.addEventListener('error',()=>say('Video gagal dimuat. Periksa J2_kelinci.mp4.'));
+ document.getElementById('play').onclick=playVideo;
+ document.getElementById('sound').onclick=()=>{video.muted=!video.muted;document.getElementById('sound').textContent=video.muted?'🔊 Aktifkan Suara':'🔇 Matikan Suara';playVideo();};
+ document.getElementById('replay').onclick=()=>{video.currentTime=0;playVideo();};
+ document.getElementById('watch').onclick=async()=>{video.pause();fb.style.display='flex';try{await fbv.play();}catch(e){console.warn(e);}};
+ document.getElementById('back').onclick=()=>{fbv.pause();fb.style.display='none';if(found)playVideo();};
+})();
+</script></body></html>
