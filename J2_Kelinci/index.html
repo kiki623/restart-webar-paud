@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>RE-START | J2 Kelinci Keluar dari Liang</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#09291c;font-family:system-ui,-apple-system,sans-serif;color:#fff;overflow:hidden}
+#hud{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:100;pointer-events:none;padding:12px;text-align:center}
+#status{display:inline-block;max-width:95%;padding:10px 14px;border-radius:10px;background:rgba(7,45,31,.88);font-size:13px;line-height:1.5}
+#controls{position:fixed;left:0;right:0;bottom:calc(15px + env(safe-area-inset-bottom, 0px));z-index:100;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 10px;pointer-events:auto}
+button{border:0;border-radius:10px;background:#f8d996;color:#19291a;padding:11px 13px;font-weight:700;font-size:13px;cursor:pointer}
+button:disabled{opacity:.5}#startCover{position:fixed;inset:0;z-index:200;background:linear-gradient(150deg,#102e20,#19513b);display:flex;justify-content:center;align-items:center;text-align:center;padding:26px}
+#startCover .inner{max-width:350px}#startCover h1{font-size:24px}#startCover p{font-size:14px;line-height:1.65}#startBtn{font-size:17px;padding:15px 23px}
+.a-canvas{z-index:0}
+</style>
+</head>
+<body>
+<div id="startCover"><div class="inner"><h1>J2 — Kelinci Keluar dari Liang</h1><p>Pindai gambar kelinci untuk menyaksikan animasi 15 detik. Gunakan Safari atau Chrome dan izinkan akses kamera. Ketuk tombol untuk mengaktifkan pemutaran video di HP.</p><button id="startBtn">Mulai Scan AR</button></div></div>
+<div id="hud"><span id="status" role="status" aria-live="polite">Arahkan kamera ke gambar kelinci J2.</span></div>
+<div id="controls"><button id="playBtn">▶ Putar Video</button><button id="soundBtn">🔊 Aktifkan Suara</button><button id="replayBtn">↻ Putar Ulang</button></div>
+<video id="rabbitVideo" src="./J2_kelinci.mp4" preload="auto" loop muted playsinline webkit-playsinline crossorigin="anonymous" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"></video>
+<a-scene id="arScene" mindar-image="imageTargetSrc: ./targets.mind; autoStart: false; uiLoading: yes; uiScanning: yes; uiError: yes; maxTrack: 1" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<a-entity id="rabbitTarget" mindar-image-target="targetIndex: 0">
+<a-plane id="videoPlane" position="0 0 0.01" width="1" height="0.5625" material="shader: flat; src: #rabbitVideo; side: double" visible="false"></a-plane>
+</a-entity>
+</a-scene>
+<script>
+(() => {
+ const video=document.getElementById('rabbitVideo');
+ const target=document.getElementById('rabbitTarget');
+ const plane=document.getElementById('videoPlane');
+ const scene=document.getElementById('arScene');
+ const status=document.getElementById('status');
+ const cover=document.getElementById('startCover');
+ const playBtn=document.getElementById('playBtn');
+ const soundBtn=document.getElementById('soundBtn');
+ let found=false, started=false;
+ const msg=(s)=>{status.textContent=s};
+ const play=async()=>{
+   try { await video.play(); plane.setAttribute('visible',true); msg(found?'Kelinci dikenali — video sedang diputar.':'Video siap. Arahkan ke gambar kelinci.'); }
+   catch(e){msg('Video belum dapat diputar. Ketuk Putar Video, atau buka di Safari/Chrome.'); console.warn(e)}
+ };
+ // Unlock playback by a direct user action; muted first for mobile browser compatibility.
+ document.getElementById('startBtn').addEventListener('click',async()=>{
+   if(started)return;started=true;
+   video.muted=true;
+   try { await video.play(); video.pause(); video.currentTime=0; } catch(e){console.warn('Video unlock:',e)}
+   cover.style.display='none';
+   try { await scene.systems['mindar-image-system'].start(); msg('Arahkan kamera ke gambar kelinci J2.'); }
+   catch(e){msg('Kamera gagal dimulai. Periksa izin kamera, HTTPS, dan browser.');console.error(e);}
+ });
+ target.addEventListener('targetFound',()=>{found=true;plane.setAttribute('visible',true);msg('Kelinci dikenali. Ketuk Putar Video jika belum bergerak.');play()});
+ target.addEventListener('targetLost',()=>{found=false;video.pause();plane.setAttribute('visible',false);msg('Gambar hilang. Arahkan kamera kembali ke kelinci J2.');});
+ playBtn.addEventListener('click',()=>{play()});
+ document.getElementById('replayBtn').addEventListener('click',()=>{video.currentTime=0;play()});
+ soundBtn.addEventListener('click',async()=>{
+    video.muted=!video.muted;
+    soundBtn.textContent=video.muted?'🔊 Aktifkan Suara':'🔇 Matikan Suara';
+    await play();
+ });
+ video.addEventListener('loadedmetadata',()=>{
+  const ratio=video.videoHeight/video.videoWidth;
+  if(Number.isFinite(ratio)&&ratio>0)plane.setAttribute('height',ratio);
+ });
+ video.addEventListener('error',()=>msg('Video tidak ditemukan. Pastikan file bernama J2_kelinci.mp4 (tanpa .mp4 ganda).'));
+ scene.addEventListener('arError',()=>msg('Gagal membuka AR. Gunakan HTTPS dan beri izin kamera.'));
+})();
+</script>
+</body>
+</html>

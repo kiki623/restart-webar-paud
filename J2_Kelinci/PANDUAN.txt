@@ -1,0 +1,13 @@
+WebAR J2 — Kelinci Keluar dari Liang
+
+Simpan ketiga file berikut dalam satu folder di GitHub Pages:
+index.html
+targets.mind  (hasilkan di MindAR compiler dari hanya gambar J2)
+J2_kelinci.mp4 (video J2 15 detik, pastikan satu ekstensi .mp4)
+
+Jika folder GitHub bernama J2_Kelinci di repository restart-webar-paud, URL:
+https://kiki623.github.io/restart-webar-paud/J2_Kelinci/
+
+Uji di Safari/Chrome: Mulai Scan AR, izinkan kamera, arahkan ke gambar kelinci. Jika video hitam, ketuk Putar Video. Untuk suara, pilih Aktifkan Suara.
+
+Peringatan: uji dengan gambar target persis sama dengan gambar yang dikompilasi; kode di sini hanya untuk targetIndex 0.
