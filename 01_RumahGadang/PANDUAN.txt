@@ -1,0 +1,8 @@
+WebAR Rumah Gadang — 22 Detik
+
+Unggah kedua file index.html dan rumah-gadang-22detik.mp4 ke DIREKTORI UTAMA repository restart-webar-paud, bukan folder J1 atau J2.
+Biarkan targets.mind dan rumah-gadang-target.jpg yang lama di root, jangan hapus.
+index.html yang baru mengganti index.html Rumah Gadang lama.
+Situs: https://kiki623.github.io/restart-webar-paud/
+Scan gambar Rumah Gadang yang sama dengan target lama. Video muncul layar penuh.
+Video tidak loop; tersedia tombol Putar Ulang.
