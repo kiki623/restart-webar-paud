@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>J2 — Kelinci Keluar dari Liang</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+* {box-sizing:border-box}
+html,body {margin:0;width:100%;height:100%;overflow:hidden;background:#081511;font-family:system-ui,-apple-system,Arial,sans-serif}
+a-scene {position:fixed!important;inset:0;width:100%!important;height:100%!important;}
+#tip {position:fixed;z-index:100;top:calc(12px + env(safe-area-inset-top));left:5%;width:90%;padding:12px;background:rgba(4,31,23,.86);color:#fff;border-radius:12px;font-size:13px;text-align:center}
+#overlay {position:fixed;z-index:1000;inset:0;background:#000;display:none;align-items:center;justify-content:center;flex-direction:column}
+#overlay.show {display:flex}
+#movie {width:100%;height:100%;object-fit:contain;background:#000}
+#toolbar {position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:0;right:0;display:flex;gap:9px;align-items:center;justify-content:center;flex-wrap:wrap;padding:0 12px}
+button {font:600 14px system-ui;cursor:pointer;border:0;border-radius:10px;padding:12px 17px;background:#ffdf9e;color:#1f2d1d;box-shadow:0 2px 7px #0005}
+#playAgain {display:none}
+</style>
+</head>
+<body>
+<div id="tip">Izinkan kamera dan arahkan ke gambar kelinci J2.</div>
+<a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; maxTrack: 1" embedded color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
+ <a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+ <a-entity id="target" mindar-image-target="targetIndex: 0"></a-entity>
+</a-scene>
+<div id="overlay" role="dialog" aria-label="Video kelinci J2">
+ <video id="movie" src="./J2_kelinci.mp4" preload="auto" playsinline webkit-playsinline muted loop></video>
+ <div id="toolbar">
+  <button id="sound">Aktifkan Suara</button>
+  <button id="playAgain">Putar Ulang</button>
+  <button id="scanAgain">Scan Lagi</button>
+ </div>
+</div>
+<script>
+(() => {
+ const target=document.querySelector('#target');
+ const overlay=document.querySelector('#overlay');
+ const movie=document.querySelector('#movie');
+ const tip=document.querySelector('#tip');
+ const sound=document.querySelector('#sound');
+ const playAgain=document.querySelector('#playAgain');
+ let alreadyShown=false;
+ async function openMovie(){
+   if(alreadyShown) return;
+   alreadyShown=true;
+   overlay.classList.add('show');
+   tip.style.display='none';
+   movie.muted=true;
+   sound.textContent='Aktifkan Suara';
+   movie.currentTime=0;
+   try { await movie.play(); }
+   catch(e) { playAgain.style.display='inline-block'; }
+ }
+ target.addEventListener('targetFound', openMovie);
+ document.querySelector('#scanAgain').addEventListener('click', ()=>{
+   movie.pause();
+   movie.currentTime=0;
+   overlay.classList.remove('show');
+   tip.style.display='block';
+   tip.textContent='Arahkan kamera ke gambar kelinci J2.';
+   alreadyShown=false;
+ });
+ sound.addEventListener('click', async ()=>{
+   movie.muted=!movie.muted;
+   sound.textContent=movie.muted?'Aktifkan Suara':'Matikan Suara';
+   try {await movie.play()}catch(e){playAgain.style.display='inline-block'}
+ });
+ playAgain.addEventListener('click',async ()=>{
+   movie.currentTime=0;
+   try {await movie.play(); playAgain.style.display='none'}catch(e){tip.textContent='Video gagal diputar. Coba buka menggunakan Safari atau Chrome.'}
+ });
+ movie.addEventListener('error', ()=>{playAgain.style.display='inline-block';playAgain.textContent='Gagal memuat video';});
+})();
+</script>
+</body>
+</html>
